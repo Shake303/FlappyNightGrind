@@ -1,0 +1,12 @@
+/* Custom styles for login page */
+body {
+    background-color: #f0f2f5;
+}
+
+.container {
+    margin-top: 100px;
+}
+
+h2 {
+    color: #007bff;
+}
