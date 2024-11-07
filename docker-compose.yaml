@@ -1,0 +1,71 @@
+services:
+  
+  mysql-proddb:
+    image: mysql:latest
+    container_name: mysql-proddb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: prodDb
+    networks:
+      backend:
+    ports:
+      - "3308:3306"  # Expose mysql-proddb on port 3308 of the host
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 3
+
+  mysql-auftdb:
+    image: mysql:latest
+    container_name: mysql-auftdb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: auftDb
+    networks:
+      backend:
+    ports:
+      - "3309:3306"  # Expose mysql-auftdb on port 3309 of the host
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 3
+
+  nginx-server:
+    image: nginx:latest
+    container_name: nginx-server
+    depends_on:
+      mysql-proddb:
+        condition: service_healthy
+      mysql-auftdb:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - backend
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    depends_on:
+      mysql-proddb:
+        condition: service_healthy
+      mysql-auftdb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+  
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    volumes:
+      - ./config:/config
+    environment:
+      - TZ=Europe/Berlin
+    ports:
+      - "9091:9091"
+
+networks:
+  backend:
+    driver: bridge
