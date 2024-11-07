@@ -1,45 +1,32 @@
 services:
   
-  mysql-proddb:
+  mysql-db:
     image: mysql:latest
-    container_name: mysql-proddb
+    container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: prodDb
+      MYSQL_DATABASE: Floppy_Bird_DB
     networks:
       backend:
     ports:
-      - "3308:3306"  # Expose mysql-proddb on port 3308 of the host
+      - "3306:3306"  # Expose mysql-db on port 3306 of the host
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/dbimport/Floppy_Bird_DB.sql:/docker-entrypoint-initdb.d/Floppy_Bird_DB.sql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialization script for extra databases
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 3
 
-  mysql-auftdb:
-    image: mysql:latest
-    container_name: mysql-auftdb
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: auftDb
-    networks:
-      backend:
-    ports:
-      - "3309:3306"  # Expose mysql-auftdb on port 3309 of the host
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 3
-
-  nginx-server:
+  nginx:
     image: nginx:latest
     container_name: nginx-server
-    depends_on:
-      mysql-proddb:
-        condition: service_healthy
-      mysql-auftdb:
-        condition: service_healthy
     ports:
-      - "80:80"
+      - "8080:80"  # Maps port 80 in the container to port 8080 on your host
+    volumes:
+      - ./nginx/html:/usr/share/nginx/html          # Mounts HTML files and stylesheets
+      - ./nginx/config/default.conf:/etc/nginx/conf.d/default.conf  # Mounts custom Nginx config
     networks:
       - backend
 
