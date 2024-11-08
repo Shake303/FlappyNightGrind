@@ -1,7 +1,7 @@
 import pygame, random, time
 from pygame.locals import *
 
-#VARIABLES
+# VARIABLES
 SCREEN_WIDHT = 400
 SCREEN_HEIGHT = 600
 SPEED = 20
@@ -9,7 +9,7 @@ GRAVITY = 2.5
 GAME_SPEED = 15
 
 GROUND_WIDHT = 2 * SCREEN_WIDHT
-GROUND_HEIGHT= 100
+GROUND_HEIGHT = 100
 
 PIPE_WIDHT = 80
 PIPE_HEIGHT = 500
@@ -21,15 +21,17 @@ hit = 'assets/audio/hit.wav'
 
 pygame.mixer.init()
 
+# Initialize font
+pygame.font.init()
+font = pygame.font.SysFont(None, 50)
 
 class Bird(pygame.sprite.Sprite):
-
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
 
-        self.images =  [pygame.image.load('assets/sprites/bluebird-upflap.png').convert_alpha(),
-                        pygame.image.load('assets/sprites/bluebird-midflap.png').convert_alpha(),
-                        pygame.image.load('assets/sprites/bluebird-downflap.png').convert_alpha()]
+        self.images = [pygame.image.load('assets/sprites/bluebird-upflap.png').convert_alpha(),
+                       pygame.image.load('assets/sprites/bluebird-midflap.png').convert_alpha(),
+                       pygame.image.load('assets/sprites/bluebird-downflap.png').convert_alpha()]
 
         self.speed = SPEED
 
@@ -46,7 +48,7 @@ class Bird(pygame.sprite.Sprite):
         self.image = self.images[self.current_image]
         self.speed += GRAVITY
 
-        #UPDATE HEIGHT
+        # UPDATE HEIGHT
         self.rect[1] += self.speed
 
     def bump(self):
@@ -57,16 +59,12 @@ class Bird(pygame.sprite.Sprite):
         self.image = self.images[self.current_image]
 
 
-
-
 class Pipe(pygame.sprite.Sprite):
-
     def __init__(self, inverted, xpos, ysize):
         pygame.sprite.Sprite.__init__(self)
 
-        self. image = pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
+        self.image = pygame.image.load('assets/sprites/pipe-green.png').convert_alpha()
         self.image = pygame.transform.scale(self.image, (PIPE_WIDHT, PIPE_HEIGHT))
-
 
         self.rect = self.image.get_rect()
         self.rect[0] = xpos
@@ -77,17 +75,13 @@ class Pipe(pygame.sprite.Sprite):
         else:
             self.rect[1] = SCREEN_HEIGHT - ysize
 
-
         self.mask = pygame.mask.from_surface(self.image)
-
 
     def update(self):
         self.rect[0] -= GAME_SPEED
 
-        
 
 class Ground(pygame.sprite.Sprite):
-    
     def __init__(self, xpos):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('assets/sprites/base.png').convert_alpha()
@@ -98,8 +92,10 @@ class Ground(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect[0] = xpos
         self.rect[1] = SCREEN_HEIGHT - GROUND_HEIGHT
+
     def update(self):
         self.rect[0] -= GAME_SPEED
+
 
 def is_off_screen(sprite):
     return sprite.rect[0] < -(sprite.rect[2])
@@ -111,6 +107,7 @@ def get_random_pipes(xpos):
     return pipe, pipe_inverted
 
 
+# Initialize game elements
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDHT, SCREEN_HEIGHT))
 pygame.display.set_caption('Flappy Bird')
@@ -124,25 +121,24 @@ bird = Bird()
 bird_group.add(bird)
 
 ground_group = pygame.sprite.Group()
-
-for i in range (2):
+for i in range(2):
     ground = Ground(GROUND_WIDHT * i)
     ground_group.add(ground)
 
 pipe_group = pygame.sprite.Group()
-for i in range (2):
+for i in range(2):
     pipes = get_random_pipes(SCREEN_WIDHT * i + 800)
     pipe_group.add(pipes[0])
     pipe_group.add(pipes[1])
 
-
-
 clock = pygame.time.Clock()
-
 begin = True
 
-while begin:
+# Initialize points
+points = 0
 
+# Main game loop
+while begin:
     clock.tick(15)
 
     for event in pygame.event.get():
@@ -160,21 +156,16 @@ while begin:
 
     if is_off_screen(ground_group.sprites()[0]):
         ground_group.remove(ground_group.sprites()[0])
-
         new_ground = Ground(GROUND_WIDHT - 20)
         ground_group.add(new_ground)
 
     bird.begin()
     ground_group.update()
-
     bird_group.draw(screen)
     ground_group.draw(screen)
-
     pygame.display.update()
 
-
 while True:
-
     clock.tick(15)
 
     for event in pygame.event.get():
@@ -190,18 +181,16 @@ while True:
 
     if is_off_screen(ground_group.sprites()[0]):
         ground_group.remove(ground_group.sprites()[0])
-
         new_ground = Ground(GROUND_WIDHT - 20)
         ground_group.add(new_ground)
 
     if is_off_screen(pipe_group.sprites()[0]):
         pipe_group.remove(pipe_group.sprites()[0])
         pipe_group.remove(pipe_group.sprites()[0])
-
         pipes = get_random_pipes(SCREEN_WIDHT * 2)
-
         pipe_group.add(pipes[0])
         pipe_group.add(pipes[1])
+        points += 1  # Increase points when the bird passes a set of pipes
 
     bird_group.update()
     ground_group.update()
@@ -210,6 +199,10 @@ while True:
     bird_group.draw(screen)
     pipe_group.draw(screen)
     ground_group.draw(screen)
+
+    # Display points
+    points_text = font.render( str(points), True, (255, 255, 255))
+    screen.blit(points_text, (SCREEN_WIDHT / 2 - points_text.get_width() / 2, 50))
 
     pygame.display.update()
 
