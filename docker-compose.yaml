@@ -1,23 +1,24 @@
+version: '3.8'
+
 services:
   
-  mysql-db:
+  mysql-floppy_birddb1:
     image: mysql:latest
-    container_name: mysql-db
+    container_name: mysql-floppy_birddb1
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: Floppy_Bird_DB
-    networks:
-      backend:
+      MYSQL_DATABASE: floppy_birddb1
     ports:
-      - "3306:3306"  # Expose mysql-db on port 3306 of the host
+      - "3308:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./mysql/dbimport/Floppy_Bird_DB.sql:/docker-entrypoint-initdb.d/Floppy_Bird_DB.sql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Initialization script for extra databases
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 3
+    networks:
+      - backend
 
   nginx:
     image: nginx:latest
@@ -34,12 +35,10 @@ services:
     image: adminer:latest
     container_name: adminer
     depends_on:
-      mysql-proddb:
-        condition: service_healthy
-      mysql-auftdb:
+      mysql-floppy_birddb1:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "8081:8080"  # Changed to avoid conflict with nginx
     networks:
       - backend
   
@@ -52,6 +51,8 @@ services:
       - TZ=Europe/Berlin
     ports:
       - "9091:9091"
+    networks:
+      - backend
 
 networks:
   backend:
