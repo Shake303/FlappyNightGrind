@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Flappy Bird</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="selectionMenu">
+    <h2>Select Bird and Pipe Color</h2>
+    <label for="birdColor">Bird Color:</label>
+    <select id="birdColor">
+      <option value="yellow">Yellow</option>
+      <option value="red">Red</option>
+      <option value="blue">Blue</option>
+    </select>
+    <label for="pipeColor">Pipe Color:</label>
+    <select id="pipeColor">
+      <option value="green">Green</option>
+      <option value="red">Red</option>
+    </select>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <script src="game.js"></script>
+</body>
+</html>
