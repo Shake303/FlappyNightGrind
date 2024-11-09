@@ -22,7 +22,9 @@ services:
 
   nginx:
     image: nginx:latest
-    container_name: nginx-server
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.nginx
     ports:
       - "8080:80"  # Maps port 80 in the container to port 8080 on your host
     volumes:
@@ -41,19 +43,7 @@ services:
       - "8081:8080"  # Changed to avoid conflict with nginx
     networks:
       - backend
-  
-  authelia:
-    image: authelia/authelia:latest
-    container_name: authelia
-    volumes:
-      - ./config:/config
-    environment:
-      - TZ=Europe/Berlin
-    ports:
-      - "9091:9091"
-    networks:
-      - backend
-
+      
 networks:
   backend:
     driver: bridge
