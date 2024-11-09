@@ -1,5 +1,6 @@
 import pygame, random, time
 from pygame.locals import *
+import mysql.connector
 
 # VARIABLES
 SCREEN_WIDHT = 400
@@ -106,6 +107,60 @@ def get_random_pipes(xpos):
     pipe_inverted = Pipe(True, xpos, SCREEN_HEIGHT - size - PIPE_GAP)
     return pipe, pipe_inverted
 
+def start_screen():
+    screen.blit(BACKGROUND, (0, 0))
+    screen.blit(BEGIN_IMAGE, (120, 150))
+    pygame.display.update()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                quit()
+            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+                waiting = False  # Exit the loop to start the game
+
+def game_over_screen():
+    screen.fill((0, 0, 0))  # Fill screen with black
+    game_over_text = font.render("Game Over", True, (255, 0, 0))
+    restart_text = font.render("Press R to Restart", True, (255, 255, 255))
+
+    # Center texts on screen
+    screen.blit(game_over_text, (SCREEN_WIDHT / 2 - game_over_text.get_width() / 2, SCREEN_HEIGHT / 3))
+    screen.blit(restart_text, (SCREEN_WIDHT / 2 - restart_text.get_width() / 2, SCREEN_HEIGHT / 2))
+
+    pygame.display.update()
+
+    # Wait for restart input
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                quit()
+            if event.type == KEYDOWN and event.key == K_r:
+                waiting = False  # Exit loop to restart game
+                
+                
+def save_score(points):
+    # Connect to the MySQL database
+    conn = mysql.connector.connect(
+        host="your_host",       # Replace with your MySQL host, e.g., "localhost" or an IP address
+        user="your_username",   # Replace with your MySQL username
+        password="your_password", # Replace with your MySQL password
+        database="game_db"      # The database you created for your game
+    )
+    
+    cursor = conn.cursor()
+    
+    # Insert the points into the scores table
+    cursor.execute('INSERT INTO scores (points) VALUES (%s)', (points,))
+    
+    # Commit the transaction and close the connection
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 # Initialize game elements
 pygame.init()
@@ -116,99 +171,84 @@ BACKGROUND = pygame.image.load('assets/sprites/background-day.png')
 BACKGROUND = pygame.transform.scale(BACKGROUND, (SCREEN_WIDHT, SCREEN_HEIGHT))
 BEGIN_IMAGE = pygame.image.load('assets/sprites/message.png').convert_alpha()
 
-bird_group = pygame.sprite.Group()
-bird = Bird()
-bird_group.add(bird)
-
-ground_group = pygame.sprite.Group()
-for i in range(2):
-    ground = Ground(GROUND_WIDHT * i)
-    ground_group.add(ground)
-
-pipe_group = pygame.sprite.Group()
-for i in range(2):
-    pipes = get_random_pipes(SCREEN_WIDHT * i + 800)
-    pipe_group.add(pipes[0])
-    pipe_group.add(pipes[1])
-
 clock = pygame.time.Clock()
-begin = True
 
-# Initialize points
-points = 0
+# Main Game Function
+def main_game():
+    bird_group = pygame.sprite.Group()
+    bird = Bird()
+    bird_group.add(bird)
 
-# Main game loop
-while begin:
-    clock.tick(15)
+    ground_group = pygame.sprite.Group()
+    for i in range(2):
+        ground = Ground(GROUND_WIDHT * i)
+        ground_group.add(ground)
 
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-        if event.type == KEYDOWN:
-            if event.key == K_SPACE or event.key == K_UP:
-                bird.bump()
-                pygame.mixer.music.load(wing)
-                pygame.mixer.music.play()
-                begin = False
-
-    screen.blit(BACKGROUND, (0, 0))
-    screen.blit(BEGIN_IMAGE, (120, 150))
-
-    if is_off_screen(ground_group.sprites()[0]):
-        ground_group.remove(ground_group.sprites()[0])
-        new_ground = Ground(GROUND_WIDHT - 20)
-        ground_group.add(new_ground)
-
-    bird.begin()
-    ground_group.update()
-    bird_group.draw(screen)
-    ground_group.draw(screen)
-    pygame.display.update()
-
-while True:
-    clock.tick(15)
-
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-        if event.type == KEYDOWN:
-            if event.key == K_SPACE or event.key == K_UP:
-                bird.bump()
-                pygame.mixer.music.load(wing)
-                pygame.mixer.music.play()
-
-    screen.blit(BACKGROUND, (0, 0))
-
-    if is_off_screen(ground_group.sprites()[0]):
-        ground_group.remove(ground_group.sprites()[0])
-        new_ground = Ground(GROUND_WIDHT - 20)
-        ground_group.add(new_ground)
-
-    if is_off_screen(pipe_group.sprites()[0]):
-        pipe_group.remove(pipe_group.sprites()[0])
-        pipe_group.remove(pipe_group.sprites()[0])
-        pipes = get_random_pipes(SCREEN_WIDHT * 2)
+    pipe_group = pygame.sprite.Group()
+    for i in range(2):
+        pipes = get_random_pipes(SCREEN_WIDHT * i + 800)
         pipe_group.add(pipes[0])
         pipe_group.add(pipes[1])
-        points += 1  # Increase points when the bird passes a set of pipes
 
-    bird_group.update()
-    ground_group.update()
-    pipe_group.update()
+    points = 0
+    running = True
 
-    bird_group.draw(screen)
-    pipe_group.draw(screen)
-    ground_group.draw(screen)
+    # Display Start Screen
+    start_screen()
 
-    # Display points
-    points_text = font.render( str(points), True, (255, 255, 255))
-    screen.blit(points_text, (SCREEN_WIDHT / 2 - points_text.get_width() / 2, 50))
+    # Main game loop
+    while running:
+        clock.tick(15)
 
-    pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                quit()
+            if event.type == KEYDOWN:
+                if event.key == K_SPACE or event.key == K_UP:
+                    bird.bump()
+                    pygame.mixer.music.load(wing)
+                    pygame.mixer.music.play()
 
-    if (pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or
-            pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask)):
-        pygame.mixer.music.load(hit)
-        pygame.mixer.music.play()
-        time.sleep(1)
-        break
+        screen.blit(BACKGROUND, (0, 0))
+
+        if is_off_screen(ground_group.sprites()[0]):
+            ground_group.remove(ground_group.sprites()[0])
+            new_ground = Ground(GROUND_WIDHT - 20)
+            ground_group.add(new_ground)
+
+        if is_off_screen(pipe_group.sprites()[0]):
+            pipe_group.remove(pipe_group.sprites()[0])
+            pipe_group.remove(pipe_group.sprites()[0])
+            pipes = get_random_pipes(SCREEN_WIDHT * 2)
+            pipe_group.add(pipes[0])
+            pipe_group.add(pipes[1])
+            points += 1  # Increase points when the bird passes a set of pipes
+
+        bird_group.update()
+        ground_group.update()
+        pipe_group.update()
+
+        bird_group.draw(screen)
+        pipe_group.draw(screen)
+        ground_group.draw(screen)
+
+        # Display points
+        points_text = font.render(str(points), True, (255, 255, 255))
+        screen.blit(points_text, (SCREEN_WIDHT / 2 - points_text.get_width() / 2, 50))
+
+        pygame.display.update()
+
+        # Check for collisions
+        if (pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or
+                pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask)):
+            pygame.mixer.music.load(hit)
+            pygame.mixer.music.play()
+            time.sleep(1)
+            running = False  # End game loop
+    save_score(points)
+    game_over_screen()  # Show Game Over screen
+    main_game()         # Restart the game when player chooses to restart
+
+# Start the game
+main_game()
