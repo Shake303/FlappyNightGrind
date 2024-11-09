@@ -1,0 +1,8 @@
+USE Floppy_Bird_DB1;
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player_name VARCHAR(50) NOT NULL,
+    score INT NOT NULL,
+    date_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
