@@ -249,6 +249,12 @@ function endGame() {
     gameRunning = false;
     inGameOverScreen = true; // Set flag for Game Over screen
     cancelAnimationFrame(gameLoopId); // Stop the game loop
+
+    // Prompt for player name and save score
+    const playerName = prompt("Enter your name:");
+    if (playerName) {
+        saveScore(playerName, score);
+    }
 }
 
 // Event listener for controls
