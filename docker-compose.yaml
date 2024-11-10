@@ -29,7 +29,7 @@ services:
 
 
   node_api:
-    build: .
+    build: bitnami/express:latest
     container_name: node_api
     expose:
       - "3000"
