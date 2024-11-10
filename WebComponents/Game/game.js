@@ -283,3 +283,19 @@ function startGame() {
 
     init(); // Initialize to show the start screen on game load
 }
+
+async function saveScore(playerName, score) {
+    try {
+        const response = await fetch('/save-score', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ playerName, score })
+        });
+        const data = await response.json();
+        console.log(data.message);  // Confirm if the score was saved
+    } catch (error) {
+        console.error('Error saving score:', error);
+    }
+}
