@@ -43,6 +43,9 @@ services:
     depends_on:
       - mysql-db1
       - mysql-db2
+    networks:
+      - mysql_network
+      - backend
 
   nginx:
     image: nginx:latest
@@ -55,6 +58,8 @@ services:
       - ./WebComponents/Game:/usr/share/nginx/html
     depends_on:
       - node_api
+    networks:
+      - backend
 
   adminer:
     image: adminer:latest
@@ -70,3 +75,4 @@ volumes:
 
 networks:
   mysql_network:
+  backend:
