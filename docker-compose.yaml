@@ -9,7 +9,7 @@ services:
     ports:
       - "3308:3306"
     volumes:
-      - db1_data:/var/lib/mysql
+      - ./dbvol/db1_data:/var/lib/mysql
       - ./mysql/init/db1:/docker-entrypoint-initdb.d
     networks:
       - mysql_network
@@ -23,10 +23,39 @@ services:
     ports:
       - "3309:3306"
     volumes:
-      - db2_data:/var/lib/mysql
+      - ./dbvol/db2_data:/var/lib/mysql
       - ./mysql/init/db2:/docker-entrypoint-initdb.d
     networks:
       - mysql_network
+
+
+  node_api:
+    build: .
+    container_name: node_api
+    expose:
+      - "3000"
+    environment:
+      - DB_HOST=mysql-db2
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=Floppy_Bird_DB2
+    volumes:
+    - ./WebComponents/NodeJs/app:/usr/src
+    depends_on:
+      - mysql-db1
+      - mysql-db2
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_webserver
+    ports:
+      - "80:80"
+    volumes:
+      - ./WebComponents/nginx/config/default.conf:/etc/nginx/conf.d/default.conf  # Mount custom Nginx configuration
+      - ./WebComponents/HTML&CSS:/usr/share/nginx/html                 # Serve static game files
+      - ./WebComponents/Game:/usr/share/nginx/html
+    depends_on:
+      - node_api
 
   adminer:
     image: adminer:latest
